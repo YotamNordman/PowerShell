@@ -1,18 +1,5 @@
-﻿<#----------------------------------------------
------------------Yotam Nordman------------------
-----------------------------------------------#> 
-#region Execution Policy , Set-StrictMode
-# This is disabled by default and need to enable in order to run a full script from file !
-
-#                        \/
-
-# Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force
-
-#                        /\
-
-# To avoid mistakes of performing impactfull commands on empty variables instead of one (Empty variables)
-Set-StrictMode -Version 1
-#endregion
+﻿#---------Yotam Nordman---------#
+#region Basic Stuff
 #region Get-Command
 #  Get-Command <SomeCommand> -Syntax
 # Will get the commands syntax this way:
@@ -42,6 +29,56 @@ Set-StrictMode -Version 1
 #         -Full        ->      Gets all the help it can find
 #         -Examples    ->      Gets examples of usage
 #endregion
+#region Get-Member -> gm
+# Gets all members of a given Object , Command
+# EXAMPLE:
+# Get-Process | gm
+#endregion
+#region Select-Object Where-Object
+# Select Object selects fields from a pipeline input
+# EXAMPLE:
+# Get-Service | Select-Object DisplayName ,CanStop
+# Where-Object lets to apply a condition to the pipeline input
+# EXAMPLE:
+# Get-Service | Where-Object Name -like 'bi*'
+#endregion
+#region Group-Object
+# Can group objects by property
+# EXAMPLE:
+# Get-Service | Group-Object -Property Status
+#endregion
+#region  ->   $_.   <-
+# Current object in the iteration or operation, like this. in .NET
+#endregion
+#endregion Basic Stuff
+#region Usefull Stuff
+#region Execution Policy , Set-StrictMode
+# This is disabled by default and need to enable in order to run a full script from file !
+
+#                        \/
+
+# Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force
+
+#                        /\
+
+# To avoid mistakes of performing impactfull commands on empty variables instead of one (Empty variables)
+Set-StrictMode -Version 1
+#endregion
+#region Measure-Command , Measure-Object
+# Measure Command gets a script block {} and measures the time it takes
+# EXAMPLE:
+# $Time = (Measure-Command {Get-Service BITS}).TotalMilliseconds
+# Measure Object counts objects that get out of pipeline
+# EXAMPLE:
+# Get-Service | Measure-Object
+#endregion
+#region Get-Credential
+# Lets you input credentials and save them or input to a function (prompts for creds)
+# Some commands have -Credential to use the inputed credentials
+# EXAMPLE:
+# Invoke-Command -Credential (Get-Credential)
+# $Creds = Get-Credential
+#endregion
 #region Get-Date
 # Gets the current date and time                                                         !!
 #                                                                                        \/
@@ -59,14 +96,29 @@ Set-StrictMode -Version 1
 # -Path <>  -> on a spacified path
 # -Recurse  -> get all paths under that path in the tree
 #endregion
-#region Export-Csv , HashTable Colmn
+#region Export-Csv , HashTable Col
 # Can apear after a PIPELINE
 # Theres an annoying line on top of the csv to remove it :
 # -NoTypeInformation
 # EXAMPLE:
 # Get-Process | Select-Object ProcessName,@{Name='hello';Expression={$_.Threads.Count}} | Export-Csv -Path C:\PowerShell\hello.csv -NoTypeInformation
 #endregion
-Get-Service hello -ErrorVariable +opa
+#region -OutVariable , OutNull
+# OutVariable directs a copy of the output to a variable of choice
+# EXAMPLE:
+# Get-Service -OutVariable something
+# $something
+# OutNull Redirects output to void
+#endregion
+#region New-IseSnippet , CTRL + J
+# UseFull functions that can be pasted with CTRL + J
+#endregion
+#endregion UserFull Stuff
 
-Get-Process | Select-Object ProcessName,@{Name='hello';Expression={$_.Threads.Count}} | Export-Csv -Path C:\PowerShell\hello.csv -NoTypeInformation
+
+
+
+
+
+
 
