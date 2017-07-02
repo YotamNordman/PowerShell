@@ -37,7 +37,7 @@
 #region Select-Object Where-Object
 # Select Object selects fields from a pipeline input
 # EXAMPLE:
-# Get-Service | Select-Object DisplayName ,CanStop
+# Get-service | Select-Object DisplayName ,CanStop
 # Where-Object lets to apply a condition to the pipeline input
 # EXAMPLE:
 # Get-Service | Where-Object Name -like 'bi*'
@@ -49,6 +49,9 @@
 #endregion
 #region  ->   $_.   <-
 # Current object in the iteration or operation, like this. in .NET
+#endregion
+#region Check PowerShell Version
+# $PSVersionTable.PSVersion
 #endregion
 #endregion Basic Stuff
 #region Basic Usefull Stuff
@@ -148,9 +151,87 @@ Set-StrictMode -Version 1
 # Test-NetConnection   ->  Is like Telnet to check a port
 #endregion
 #endregion
+function Login-Faceook {
+# Remember to give creds as param
+# $Credential = Get-Credential
+# Login-Faceook $Credential
+  param ($Credential)
+  
+  $url = 'https://www.facebook.com/'
+  $r = Invoke-WebRequest -Uri $url -SessionVariable fb -UseBasicParsing   
+  $form = $r.Forms[0]
+  
+  # change this to match the website form field names:
+  $form.Fields['email'] = $Credential.UserName
+  $form.Fields['pass'] = $Credential.GetNetworkCredential().Password
+  
+  # change this to match the form target URL
+  $r = Invoke-WebRequest -Uri $form.Action -WebSession $fb -Method POST -Body $form.Fields
+  $r
+}
+#region DSC First Tests
+Configuration MyFirstDSC
+{
+   # A Configuration block can have zero or more Node blocks
+   Node 'DESKTOP-COBF18G'#'DESKTOP-B0R554C'
+   {
+        Archive myArchiveExample
+        {
+            Ensure = "Present" # You can also set Ensure to "Absent"
+            Path = "C:\PSTest\Demos.zip"
+            Destination = "C:\PSTest\Test"
+            DependsOn= '[File]CreateFolder'
+        }
+        Registry myRegistryExample
+        {
+          Ensure = "Present"
+          Key = 'HKEY_LOCAL_MACHINE\SOFTWARE'
+          ValueName = "HELLO"
+          ValueData = "ITS.ME"
+        }
+        File CreateFolder
+        {
+            DestinationPath='C:\PSTest\Test'
+            Ensure ='Present'
+            Type ='Directory'
+        }
+#        WindowsFeature IIS
+#        {
+#        Ensure = "Present"
+#        Name = "Web-Server"
+#        }
+#        File WebDirectory
+#        {
+#        Ensure = "Present"
+#        Type = "Directory"
+#        Recurse= $true
+#        SourcePath= 'C:\Powershell\whatwhat'
+#        DestinationPath= "C:\inetpub\wwwroot"
+#        DependsOn= "[WindowsFeature]IIS"
+#       }
+    }
 
+   LocalConfigurationManager{
+   ConfigurationMode="ApplyAndAutocorrect"
+   RefreshFrequencyMins=30
+   ConfigurationModeFrequencyMins=30
+   #ConfigurationID=''
+   #DownloadManagerName="WebDownloadManager"
+   #RefreshMode="Pull"
+   #CertificateID="71AA68562316FE3F73536F1096B85D66289ED60E"
+   #Credential=$cred
+   #RebootNodeIfNeeded=$true
+   #AllowModuleOverwrite=$false
+   }
+}
+mkdir 'C:\PSTest\MyFirstDSC\' -ErrorAction SilentlyContinue
+cd 'C:\PSTest\MyFirstDSC\'
+MyFirstDSC
 
+#notepad .\MyFirstDSC\Web2012R2.mof
 
-
-
-
+Start-DscConfiguration  -Verbose -Path 'C:\PSTest\MyFirstDSC\MyFirstDSC\' -Force -Wait -ComputerName 'DESKTOP-COBF18G'
+#Stop-DscConfiguration 
+#Enable-PSRemoting
+#Enable-PSRemoting -SkipNetworkProfileCheck
+#endregion DSC First Tests
