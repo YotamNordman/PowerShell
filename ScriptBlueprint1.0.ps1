@@ -151,6 +151,13 @@ Set-StrictMode -Version 1
 # Test-NetConnection   ->  Is like Telnet to check a port
 #endregion
 #endregion
+#region LDAP Query
+# Basic LDAP Syntax
+# (attribute=Something) -> (givenName=Name)
+# Logical chars and wildcards still are relevant -> = & ! * |
+# Where can i search with this LDAP -> In LDAP Datastores like AD
+# Doesn't really apply to powershell
+#endregion
 #region Facebook Login
 function Login-Facebook {
 # Remember to give creds as param
@@ -239,125 +246,3 @@ Get-DscConfiguration
 #Enable-PSRemoting
 #Enable-PSRemoting -SkipNetworkProfileCheck
 #endregion DSC First Tests
-#region DSC New Domain
-configuration NewDomain             
-{             
-   param             
-    (             
-        [Parameter(Mandatory)]             
-        [pscredential]$safemodeAdministratorCred,             
-        [Parameter(Mandatory)]            
-        [pscredential]$domainCred            
-    )             
-            
-    Import-DscResource -ModuleName xActiveDirectory            
-            
-    Node $AllNodes.Where{$_.Role -eq "Primary DC"}.Nodename             
-    {             
-            
-        LocalConfigurationManager            
-        {            
-            ActionAfterReboot = 'ContinueConfiguration'            
-            ConfigurationMode = 'ApplyOnly'            
-            RebootNodeIfNeeded = $true            
-        }            
-            
-        File ADFiles            
-        {            
-            DestinationPath = 'N:\NTDS'            
-            Type = 'Directory'            
-            Ensure = 'Present'            
-        }            
-                    
-        WindowsFeature ADDSInstall             
-        {             
-            Ensure = "Present"             
-            Name = "AD-Domain-Services"             
-        }            
-            
-        # Optional GUI tools            
-        WindowsFeature ADDSTools            
-        {             
-            Ensure = "Present"             
-            Name = "RSAT-ADDS"             
-        }            
-            
-        # No slash at end of folder paths            
-        xADDomain FirstDS             
-        {             
-            DomainName = $Node.DomainName             
-            DomainAdministratorCredential = $domainCred             
-            SafemodeAdministratorPassword = $safemodeAdministratorCred            
-            DatabasePath = 'N:\NTDS'            
-            LogPath = 'N:\NTDS'            
-            DependsOn = "[WindowsFeature]ADDSInstall","[File]ADFiles"            
-        }            
-            
-    }             
-}            
-            
-# Configuration Data for AD              
-$ConfigData = @{             
-    AllNodes = @(             
-        @{             
-            Nodename = "localhost"             
-            Role = "Primary DC"             
-            DomainName = "alpineskihouse.com"             
-            RetryCount = 20              
-            RetryIntervalSec = 30            
-            PsDscAllowPlainTextPassword = $true            
-        }            
-    )             
-}             
-            
-NewDomain -ConfigurationData $ConfigData `
-    -safemodeAdministratorCred (Get-Credential -UserName '(Password Only)' `
-        -Message "New Domain Safe Mode Administrator Password") `
-    -domainCred (Get-Credential -UserName alpineskihouse\administrator `
-        -Message "New Domain Admin Credential")            
-            
-# Make sure that LCM is set to continue configuration after reboot            
-Set-DSCLocalConfigurationManager -Path .\NewDomain –Verbose            
-            
-# Build the domain            
-Start-DscConfiguration -Wait -Force -Path .\NewDomain -Verbose    
-#endregion DSC New Domain
-#region DSC Install Chrome
-Configuration Sample_InstallChromeBrowser
-{
-    param
-    (
-    [Parameter(Mandatory)]
-    $Language,
-        
-    [Parameter(Mandatory)]
-    $LocalPath
-        
-    )
-    
-    Import-DscResource -module xChrome
-    
-    MSFT_xChrome chrome
-    {
-    Language = $Language
-    LocalPath = $LocalPath
-    }
-}
-#endregion DSC Install Chrome
-#region msi Install Tests
-$ComputerNames = @('C1')
-Configuration InstallChrome
-{
-    Node $ComputerNames
-    {
-        Package Install7Zip
-        {
-            Ensure = 'Present'
-            Name = 'Google Chrome'
-            Path = '\\Fs1\share\Chrome.msi'
-            ProductId = 'FEE5381C5CC033F4F9230F9B0148BB22'
-
-        }
-    }
-}
-#endregion msi Install Tests
