@@ -344,3 +344,20 @@ Configuration Sample_InstallChromeBrowser
     }
 }
 #endregion DSC Install Chrome
+#region msi Install Tests
+$ComputerNames = @('C1')
+Configuration InstallChrome
+{
+    Node $ComputerNames
+    {
+        Package Install7Zip
+        {
+            Ensure = 'Present'
+            Name = 'Google Chrome'
+            Path = '\\Fs1\share\Chrome.msi'
+            ProductId = 'FEE5381C5CC033F4F9230F9B0148BB22'
+
+        }
+    }
+}
+#endregion msi Install Tests
