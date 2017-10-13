@@ -158,26 +158,6 @@ Set-StrictMode -Version 1
 # Where can i search with this LDAP -> In LDAP Datastores like AD
 # Doesn't really apply to powershell
 #endregion
-#region Facebook Login
-function Login-Facebook {
-# Remember to give creds as param
-# $Credential = Get-Credential
-# Login-Faceook $Credential
-  param ($Credential)
-  
-  $url = 'https://www.facebook.com/'
-  $r = Invoke-WebRequest -Uri $url -SessionVariable fb -UseBasicParsing   
-  $form = $r.Forms[0]
-  
-  # change this to match the website form field names:
-  $form.Fields['email'] = $Credential.UserName
-  $form.Fields['pass'] = $Credential.GetNetworkCredential().Password
-  
-  # change this to match the form target URL
-  $r = Invoke-WebRequest -Uri $form.Action -WebSession $fb -Method POST -Body $form.Fields
-  $r
-}
-#endregion Facebook Login
 #region DSC First Tests
 Configuration MyFirstDSC
 {
@@ -246,6 +226,27 @@ Get-DscConfiguration
 #Enable-PSRemoting
 #Enable-PSRemoting -SkipNetworkProfileCheck
 #endregion DSC First Tests
+#region Usefull scripts of other people
+#region Facebook Login
+function Login-Facebook {
+# Remember to give creds as param
+# $Credential = Get-Credential
+# Login-Faceook $Credential
+  param ($Credential)
+  
+  $url = 'https://www.facebook.com/'
+  $r = Invoke-WebRequest -Uri $url -SessionVariable fb -UseBasicParsing   
+  $form = $r.Forms[0]
+  
+  # change this to match the website form field names:
+  $form.Fields['email'] = $Credential.UserName
+  $form.Fields['pass'] = $Credential.GetNetworkCredential().Password
+  
+  # change this to match the form target URL
+  $r = Invoke-WebRequest -Uri $form.Action -WebSession $fb -Method POST -Body $form.Fields
+  $r
+}
+#endregion Facebook Login
 #region Reading From Memory
 # Not my code but it seems usefull so...
 <#
@@ -965,4 +966,17 @@ function Out-Minidump
 # Invoke-WebRequest -Uri $_ -OutFile "C:$fileName"
 # Write-Host 'Image download complete'
 # })
+#endregion
+#endregion
+#region Crypto Tests
+#function GetAllCoinsFromMarket(){
+#    $request =  Invoke-WebRequest -Uri "https://api.coinmarketcap.com/v1/ticker/"
+#    $json = $request.Content
+#    $table = @{}
+#    $split  = $json.Split("{")
+#    $split[1..$split.Count] | Foreach {$table[$_.Split('"')[3]] = @{id = $_.Split('"')[3];name = $_.Split('"')[7];symbol = $_.Split('"')[11];rank=$_.Split('"')[15];price_usd=$_.Split('"')[19];price_btc=$_.Split('"')[23];percent_change_1h = $_.Split('"')[43];percent_change_24h=$_.Split('"')[47];percent_change_7d=$_.Split('"')[51];}}
+#    return $table
+#}
+
+# manually parsed the json to get me the properties into custon objects in the hashtable of custom objects each represent a cryprocurrency key is the id of the coin value is the custom object
 #endregion
