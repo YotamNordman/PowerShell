@@ -174,6 +174,14 @@ Set-StrictMode -Version 1
 # Doesn't really apply to powershell
 #endregion
 #region DSC Stuff
+# There are 3 types of pull servers in DSC
+# SMB
+# HTTP
+# HTTPS
+# With push the protocol used is wsman
+# When u encrypt the data with the kerberos ticket u can use WINRM
+# To get the registration key and certificate thumbprint to a remote machine you can push these details over push configuration in order to move to pull later
+# Remember when publishing a configuration when i create a checksum to use -force otherwise it wont work and the remote nodes will still think the file is the old one
 #region DSC First Tests
 Configuration MyFirstDSC
 {
