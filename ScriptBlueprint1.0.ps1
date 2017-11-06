@@ -120,6 +120,17 @@ Set-StrictMode -Version 1
 # EXAMPLE:
 # $s = dir C:\PowerShell| Out-GridView -PassThru   ->   Lets you pop out a windows and choose an object into the variable
 #endregion
+#region Shortcuts for ISE
+# CTRL + J can paste some templates for stuff like advance functions
+# CTRL + T opens a new powershell runspace within the same ise
+# CTRL + N new page
+# Alt and mark stuff does same as in notepad++
+#endregion
+#region Module imports
+# Get a module from the Save-Module cmdlet with internet then u can copy
+# Then can install from a the path u spacified in the last command
+# Remember it has a param of Scope that installs it for one user or all users
+#endregion
 #endregion UserFull Stuff
 #region More Advance Stuff
 #region $ConfimPreference
@@ -150,6 +161,10 @@ Set-StrictMode -Version 1
 # Test-Connection      ->  Uses Ping
 # Test-NetConnection   ->  Is like Telnet to check a port
 #endregion
+#region [validateset(values that you can accept)][]
+# Declare the type of an object like string
+# Example: [ValidateSet("opa")][string]$somestring can only accept strings that are equal to op
+#endregion
 #endregion
 #region LDAP Query
 # Basic LDAP Syntax
@@ -158,6 +173,7 @@ Set-StrictMode -Version 1
 # Where can i search with this LDAP -> In LDAP Datastores like AD
 # Doesn't really apply to powershell
 #endregion
+#region DSC Stuff
 #region DSC First Tests
 Configuration MyFirstDSC
 {
@@ -215,6 +231,7 @@ Configuration MyFirstDSC
 }
 mkdir 'C:\PSTest\MyFirstDSC\' -ErrorAction SilentlyContinue
 cd 'C:\PSTest\MyFirstDSC\'
+# Remember you tard! this creates the mof file of the configuration, and it creates it in a directory in the name of the configuration so double \MyFirstDSC
 MyFirstDSC
 
 #notepad .\MyFirstDSC\Web2012R2.mof
@@ -226,6 +243,7 @@ Get-DscConfiguration
 #Enable-PSRemoting
 #Enable-PSRemoting -SkipNetworkProfileCheck
 #endregion DSC First Tests
+#endregion
 #region Usefull scripts of other people
 #region Facebook Login
 function Login-Facebook {
@@ -980,3 +998,4 @@ function Out-Minidump
 
 # manually parsed the json to get me the properties into custon objects in the hashtable of custom objects each represent a cryprocurrency key is the id of the coin value is the custom object
 #endregion
+#TODO Write how to secure string username and password
