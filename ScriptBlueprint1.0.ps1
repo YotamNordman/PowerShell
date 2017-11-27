@@ -182,6 +182,28 @@ Set-StrictMode -Version 1
 # When u encrypt the data with the kerberos ticket u can use WINRM
 # To get the registration key and certificate thumbprint to a remote machine you can push these details over push configuration in order to move to pull later
 # Remember when publishing a configuration when i create a checksum to use -force otherwise it wont work and the remote nodes will still think the file is the old one
+# Import-DscResource -ModuleName PSDesiredStateConfiguration
+# This command works only inside a configuration, to get intellisense write an empty configuration block.
+# Restore-DscConfiguration -> ROLLBACK (LCM Saved the previous configuration so if a rollback is necessary it will be already on the target nodes for rollback)
+# Test-DscConfiguration -Detailed -> checks whether the actual configuration on the nodes matches the desired state configuration
+# Means it runs all the test functions that are found inside the configuration
+#region LCM
+# Get LCM -> Local Configuration Manager from a remote machine:
+# Remember to enable the psremoting on the remote machine -> Enable-PSRemoting -SkipNetworkProfileCheck
+# Then query the machine for its configuration:
+# Get-DscLocalConfigurationManager -CimSession 'localhost'
+# LCM is in every pc and its default configuration is PUSH There are 4 states to an LCM:
+# Idle
+# Busy
+# PendingReboot
+# PendingConfiguration
+# To Test the LCM on a machine:
+# Get-DscConfigurationStatus -> Check the LCM Status
+# Get-DscConfigurationStatus -All -> Check the LCM Status History
+# LCM Also has a flag of Action After Reboot (DO NOT MARK THE FLAG AS NO IT WILL FK UP OTHERS CONFIGS) and a debug mode that can pull the configuration from the machine and use remote debugging tools with f11 and all.
+# Running the Configuration(by name) Creates the mof file (its the configuration file with everything that needs to be done in the configuration)
+# Start-DscConfiguration Pushed the mof file created earlier
+#endregion
 #region DSC First Tests
 Configuration MyFirstDSC
 {
@@ -250,7 +272,41 @@ Get-DscConfiguration
 #Stop-DscConfiguration 
 #Enable-PSRemoting
 #Enable-PSRemoting -SkipNetworkProfileCheck
-#endregion DSC First Tests
+#endregion
+#region PUSH Configuration
+# The default configuration of a node is push mode
+# EXAMPLE for pushing RSAT into a target node
+configuration GiveRSAT
+{
+node localhost
+    {
+        WindowsFeature FileServices
+        {
+            Ensure = "Present"
+            Name = "RSAT-File-Services"
+        }
+    }
+}
+# DscLocalConfigurationManager() is a type for configuring the lcm of a node with some flags that determine how the lcm acts
+[DscLocalConfigurationManager()]
+Configuration LCMPushDisableReboot 
+{ 
+    Node localhost     
+        {        
+            Settings        
+                {            
+                    ActionAfterReboot              = 'ContinueConfiguration'
+                    ConfigurationMode              = 'ApplyAndAutoCorrect'
+                    RebootNodeIfNeeded             = $False
+                    RefreshMode                    = 'Push'
+                 }          
+        } 
+}
+# Get-Job -> Gets Windows PowerShell background jobs that are running in the current session
+# Dependencies with DependsOn
+# Remember that a configuration runs asyncronicly(all kinds of jobs run in paralel) which means if a job depends on another job it can be messed up because the other job runs after it by chance
+# so to stage the deployment of a configuration use dependencies Example in DSC First Tests in the file
+#endregion
 #endregion
 #region Usefull scripts of other people
 #region Facebook Login
@@ -281,9 +337,6 @@ function Check-MemoryProtection
 ##################################################################
 #.Synopsis
 # Retrieves the memory protections of an arbitrary address.
-# 
-# Author: Matthew Graeber (@mattifestation)
-# License: GNU GPL v2
 #.Description
 # The Check-MemoryProtection cmdlet returns the memory protections of any memory address.
 #
@@ -472,9 +525,6 @@ function Dump-Memory
 ##################################################################
 #.Synopsis
 # Dumps memory contents to stdout or to disk.
-# 
-# Author: Matthew Graeber (@mattifestation)
-# License: GNU GPL v2
 #.Description
 # The Dump-Memory cmdlet displays the contents of memory to stdout. You also have the option to dump raw memory to disk.
 #.Parameter Address
@@ -1007,3 +1057,5 @@ function Out-Minidump
 # manually parsed the json to get me the properties into custon objects in the hashtable of custom objects each represent a cryprocurrency key is the id of the coin value is the custom object
 #endregion
 #TODO Write how to secure string username and password
+Get-DscLocalConfigurationManager -CimSession 'localhost'
+Get-WindowsFeature -Name RSAT*
