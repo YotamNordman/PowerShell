@@ -1167,7 +1167,54 @@ function Out-Minidump
 
 # manually parsed the json to get me the properties into custom objects in the hash table of custom objects each represent a crypro currency key is the id of the coin value is the custom object
 #endregion
-#region Im Reading About ATA and Domain environment attacks
+#region Im Reading About ATA and Active Directory Attacks
+
+#endregion
+#region DCShadow
+# This method utilizes trusts in the forest in order to infiltrate the target domain.
+# Then run your own DC therefore negating the siem(the thing that processes the logs in real time)
+# In order to discover the trust relationships in the current domain you are inside you can user a simple query,
+# this information is open to any user(including the trusted ones)
+# Getting the trust information:
+# 1.Get-ADTrust
+# 2.nltest.exe /domain_trusts
+# 3.can also use dsa.msc query a custom search for trusted domain objects where the value name is present
+# Better techniches:
+# Partition data:
+# Every DC contains the configuration partition, this partition stores configuration objects for the entire forest(the same in the whole forest)
+# The configuration partition includes the definition of the Domains(AD partitions) in cn=partitions,cn=configuration,dc=forestRootDomain
+# This gains the info of the domain list in the forest
+# Can also use adsi edit to connect to configuration partition and browse to partitions and then configuration.
+# Ive checked with a no privilages user and it can do this
 
 #endregion
 #TODO Write how to secure string username and password
+#region My Test environmet
+#Setup:
+# Create 4 VMs - DC1 - winserver16 - DC2 -winserver16 - C1 - win10 1709 - C2 - win10 1709
+# All VMs have 2gb ram and 1 core and are at local NAT VMNET 0 stored in a single file not multiple(this is with vmware)
+# Drop windows firewall at firewall settings
+# Define static ips for all and disable ipv6(it becomes default if its enabled)
+# Change the computer name to the name of the VM for comfort
+# Set a Default Admin password because it is a prerequisite for promoting to a domain controller
+# Promote the 2 DC Machines to domain controllers each in a different forest
+# Set the default domain admin password
+# In network settings in the client machines use the Corresponding DCs as prefered DNS
+# Join the client machines, one into each domain
+# Define a DNS stub zone so they can recognize each other in prep of the trust
+# Download RSAT(Remote server Administration Tools) KB and install it on client machines
+# Checkpoint 1: Shut down all machines for an offline snapshot. Then bring them back on
+# If I now ping the counterpart domain name it replies ipv4.
+# Now with Active directory domains and trusts, under properties there is the trust wizard
+# Created a 2 direction forest trust. and validated on the other side in the same place where the trust wizard is
+# After ive validated on the 2nd domain, ive confirmed the end of the wizard in the 1st domain
+# Check if i can get the trust with the domain admin account from the client machine:
+# ipmo act*
+# Get-ADTrust -Filter *
+# I get the trust
+# Now log on to the same machine with a non privilaged account(only member of domain users) do the same commands:
+# I get the trust
+# I get also log on with a user from domain 1 to a machine in domain 2
+# nltest.exe /domain_trusts works with both privilaged and unprivilaged users.
+# Checkpoint 2: Shut down all machines for an offline snapshot. Then bring them back on
+#endregion
