@@ -1170,7 +1170,7 @@ function Out-Minidump
 #region Im Reading About ATA and Active Directory Attacks
 
 #endregion
-#region DCShadow
+#region DCShadow  - What I Learned
 # This method utilizes trusts in the forest in order to infiltrate the target domain.
 # Then run your own DC therefore negating the siem(the thing that processes the logs in real time)
 # In order to discover the trust relationships in the current domain you are inside you can user a simple query,
@@ -1213,6 +1213,27 @@ function Out-Minidump
 # nltest /Server:DC1 /DsGetDC:amish.tamesh
 # nltest /Server:DC2 /DsGetDC:yotam.nordman
 # This works both ways and gets me a DC from the domain that i asked for by asking a dc in my domain, also gets me the forest name.
+
+
+# I now have the info needed.
+# How to register a DC?
+# no need to be a member of the domain controllers group
+# 1. A change in the configuration partition
+# CN=Configuration,CN=Sites,DC=yotam,DC=nordman,CN=Default-First-Site-Name -> need to create a server with NTDS settings.
+# This modification is disabled by default
+# DrsAddEntry is not limited to DC registration
+# 2. A modification of the SPN of a computer account that the attacker owns
+# Running a DC stuff needed
+# 1. Imporsonate the computer account to use its SPN
+# 2. Run a RPC server listening for minimal APIs (in mimikatz its like DrsGetNCChanges - dcsync)
+# 3. Trigger a replication -
+# By using DrsReplicaAdd, requires permissions
+# Or wait 15 minutes
+# mimikatz provides commands to run the rpc server and push changes, and a special wininternals trick to modify the AD database
+# Detecting this, using LDP.exe or using repadmin /showobjmeta <DB> <Object>
+# There u can see the originating DSA(the dc that did it) and the time
+# Tracking Schema changes,
+# There is an attribute called schemainfo that can track schema changes
 #endregion
 #region My Test environmet
 #Setup:
