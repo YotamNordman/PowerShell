@@ -1167,7 +1167,103 @@ function Out-Minidump
 
 # manually parsed the json to get me the properties into custom objects in the hash table of custom objects each represent a crypro currency key is the id of the coin value is the custom object
 #endregion
+#region Kerberos and Kerberos over Active Directory Domain Trust the Microsoft Version
+# Kerberos
+
+# Components:
+# Client
+# Service
+# Service Principal Name (SPN)
+# Key Distribution Center(KDC)
+# Authentication Service (AS)
+# Ticket Granting Service(TGS)
+
+# Tickets:
+# Ticket Granting Ticket (TGT)
+# Service Ticket         (ST)
+
+# Sub Protocols (REQ and REP):
+# KRB_AS_REQ
+# KRB_AS_REP
+# KRB_TGS_REQ
+# KRB_TGS_REP
+# KRB_AP_REQ
+# KRB_AP_REP
+
+# Dependencies:
+# Time
+# OS
+# TCP(Since windows Vista)
+# AD
+# SPN
+# DNS
+# Kerberos works TCP over port 88, This does not effect the application protocol(HTTP etc...)
+
+# Keys:                        
+# User Key                    -  When a user is created, the password is used to create the user key.
+#                                The user key is stored with the user's object in the Active Directory.
+#                                At the workstation, the user key is created when the user logs on.
+#                                This key is the Hash of the Users Password
+# Ticket Granting Service Key -  
+# TGS Session Key             -  Keys that are disposed after that session 
+# Service Key                 -  Services use a key based on the account password they use to log on
+#                                All KDCs in the same realm use the same service key.
+#                                This key is based on the password assigned to the krbtgt account.
+#                                Every Active Directory domain will have this built-in account.
+# Inter-realm keys            -  In order for cross-realm authentication to occur, the KDCs must share an inter-realm key.
+#                                The realms can then trust each other because they share the key.
+#                                This key is the trust password
+# Session Key                 -  Keys that are disposed after that session
+
+# Kerberos In Same Domain Steps:
+# 1. User Hash to request TGT
+# 2. TGT encrypted with krbtgt hash
+# 3. TGS Request for Service Ticket
+# 4. Service Ticket for server encrypted with Servers Account Hash
+# 5. Present the Server with Service Ticket encoded with servers account hash
+# 6. (Optional)  When the client on the user's workstation receives KRB_AP_REP,
+#                Tt decrypts the service's authenticator with the session key it shares with the service and compares the time returned by the service with the time in the client's original authenticator.
+#                If the times match, the client knows that the service is genuine.
+#(PAC - Privilege Attribute Certificate, User SID + Groups and nested clams and other login info inside the service ticket this is used to create the users access token)
+
+# Kerberos With a Trusted Domain Steps:
+# 1. User Hash to request TGT
+# 2. TGT encrypted with krbtgt hash
+# 3. TGS Request for Service Ticket
+# 4. Inter Realm TGT encrypted with Inter Realm Trust Key(The trust password)
+# 5. TGS request for server with inter realm TGT
+# 6. Service ticket for server encoded with servers account hash
+# 7. Present the Server with Service Ticket encoded with servers account hash
+
+# Random Facts:
+# Machine Account password is rerandomed every 30 days
+# Microsoft currently uses MD4 to hash credentials, STEALING THE HASH IS LIKE STEALING THE PASSWORD thats why its weakly hashed
+# Session key is by default for 10 hours
+# Unicodepwd - the attribute in the computer account and the user account that stores the password
+# When you gpupdate it creates a kerberos ticket as well, you will see it on klist
+# \\127.0.0.1 - is NTLM
+# \\FQDN or \\HOSTNAME is Kerberos
+# RID Master Role gives 500 SIDs to a DC as an RID pool by default, DCs ask to renew if the pool is at half capacity
+# How does the KDC determine exacly what key to use when encrypting these service tickets? -> SPN!
+# The DCs in the domain with the application has the SPN. Host based spns are auto generated for built in services...
+# in reallity SPNs are only created for the host service and all built in services use that.
+# When a domain user requests access to \\FQDN\C$  the KDC maps this request to Host\FQDN SPN, this means that the hash of the target machine
+# that exists both in NTDS.DIT and localy on the host. This is used to encrypt the server part of the TGS. Then the ticket is presented to target host
+# and that host determines if access is permited.
+#endregion
 #region Im Reading About ATA and Active Directory Attacks
+# Kerberoasting without mimikatz:
+# We generally don’t care about host-based SPNs.
+# As a computer’s machine account password is randomized by default and rotates every 30 days.
+# Arbitrary SPNs can also be registered for domain user accounts as well. 
+# If we have an arbitrary SPN that is registered for a domain user account,
+# then the NTLM hash of that user’s account’s plaintext password is used for the service ticket creation.
+# This is the key to Kerberoasting.
+# Any user can request a TGS for any service that has a registered SPN (HOST or arbitrary) in a user or computer account in Active Directory.
+# Remember that just requesting this ticket doesn’t grant access to the requesting user
+# The server/service to ultimately determine whether the user should be given access.
+# Because part of a TGS requested for an SPN instance is encrypted with the NTLM hash of a service account’s plaintext password,
+# any user can request these TGS tickets and then crack the service account’s plaintext password offline.
 
 #endregion
 #region DCShadow  - What I Learned
@@ -1263,89 +1359,5 @@ function Out-Minidump
 # I get also log on with a user from domain 1 to a machine in domain 2
 # nltest.exe /domain_trusts works with both privilaged and unprivilaged users.
 # Checkpoint 2: Shut down all machines for an offline snapshot. Then bring them back on
-#endregion
-#region Kerberos and Kerberos over Active Directory Domain Trust the Microsoft Version
-# Kerberos
-
-# Components:
-# Client
-# Service
-# Service Principal Name (SPN)
-# Key Distribution Center(KDC)
-# Authentication Service (AS)
-# Ticket Granting Service(TGS)
-
-# Tickets:
-# Ticket Granting Ticket (TGT)
-# Service Ticket         (ST)
-
-# Sub Protocols (REQ and REP):
-# KRB_AS_REQ
-# KRB_AS_REP
-# KRB_TGS_REQ
-# KRB_TGS_REP
-# KRB_AP_REQ
-# KRB_AP_REP
-
-# Dependencies:
-# Time
-# OS
-# TCP(Since windows Vista)
-# AD
-# SPN
-# DNS
-# Kerberos works TCP over port 88, This does not effect the application protocol(HTTP etc...)
-
-# Keys:                        
-# User Key                    -  When a user is created, the password is used to create the user key.
-#                                The user key is stored with the user's object in the Active Directory.
-#                                At the workstation, the user key is created when the user logs on.
-#                                This key is the Hash of the Users Password
-# Ticket Granting Service Key -  
-# TGS Session Key             -  Keys that are disposed after that session 
-# Service Key                 -  Services use a key based on the account password they use to log on
-#                                All KDCs in the same realm use the same service key.
-#                                This key is based on the password assigned to the krbtgt account.
-#                                Every Active Directory domain will have this built-in account.
-# Inter-realm keys            -  In order for cross-realm authentication to occur, the KDCs must share an inter-realm key.
-#                                The realms can then trust each other because they share the key.
-#                                This key is the trust password
-# Session Key                 -  Keys that are disposed after that session
-
-# Kerberos In Same Domain Steps:
-# 1. User Hash to request TGT
-# 2. TGT encrypted with krbtgt hash
-# 3. TGS Request for Service Ticket
-# 4. Service Ticket for server encrypted with Servers Account Hash
-# 5. Present the Server with Service Ticket encoded with servers account hash
-# 6. (Optional)  When the client on the user's workstation receives KRB_AP_REP,
-#                Tt decrypts the service's authenticator with the session key it shares with the service and compares the time returned by the service with the time in the client's original authenticator.
-#                If the times match, the client knows that the service is genuine.
-#(PAC - Privilege Attribute Certificate, User SID + Groups and nested clams and other login info inside the service ticket this is used to create the users access token)
-
-# Kerberos With a Trusted Domain Steps:
-# 1. User Hash to request TGT
-# 2. TGT encrypted with krbtgt hash
-# 3. TGS Request for Service Ticket
-# 4. Inter Realm TGT encrypted with Inter Realm Trust Key(The trust password)
-# 5. TGS request for server with inter realm TGT
-# 6. Service ticket for server encoded with servers account hash
-# 7. Present the Server with Service Ticket encoded with servers account hash
-
-# Random Facts:
-# Machine Account password is rerandomed every 30 days
-# Microsoft currently uses MD4 to hash credentials, STEALING THE HASH IS LIKE STEALING THE PASSWORD thats why its weakly hashed
-# Session key is by default for 10 hours
-# Unicodepwd - the attribute in the computer account and the user account that stores the password
-# When you gpupdate it creates a kerberos ticket as well, you will see it on klist
-# \\127.0.0.1 - is NTLM
-# \\FQDN or \\HOSTNAME is Kerberos
-# RID Master Role gives 500 SIDs to a DC as an RID pool by default, DCs ask to renew if the pool is at half capacity
-# How does the KDC determine exacly what key to use when encrypting these service tickets? -> SPN!
-# The DCs in the domain with the application has the SPN. Host based spns are auto generated for built in services...
-# in reallity SPNs are only created for the host service and all built in services use that.
-# When a domain user requests access to \\FQDN\C$  the KDC maps this request to Host\FQDN SPN, this means that the hash of the target machine
-# that exists both in NTDS.DIT and localy on the host. This is used to encrypt the server part of the TGS. Then the ticket is presented to target host
-# and that host determines if access is permited.
 #endregion
 #TODO Write how to secure string username and password
