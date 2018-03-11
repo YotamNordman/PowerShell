@@ -1255,8 +1255,8 @@ function Out-Minidump
 #region ATA - Advances Threat Analytics
 # How does ATA work - It uses a network parsing engine to capture and parse network traffic of multiple protocols(for example Kerberos,DNS,RPC,NTLM,etc...)
 # To do this the ata does Port mirroring from Domain Controllers and DNS servers to the ATA Gateway
+# And/or, Deploying an ATA Lightweight Gateway (LGW) directly on Domain Controllers
 # Port mirroring is used on a network switch to send a copy of network packets seen on one switch port (or an entire VLAN) to a network monitoring connection on another switch port
-# and/or Deploying an ATA Lightweight Gateway (LGW) directly on Domain Controllers
 # ATA could also get info from logs and events on the network.
 # This is in order to learn the behavior of users and other entities in the organization.
 # ATA can take logs from:
@@ -1265,9 +1265,16 @@ function Out-Minidump
 # Directly from the Windows Event Collector (for the Lightweight Gateway)
 # What does ATA do?
 # ATA technology detects multiple suspicious activities, focusing on several phases of the cyber-attack kill chain including:
-# Reconnaissance, during which attackers gather information on how the environment is built, what the different assets are, and which entities exist. They generally building their plan for the next phases of the attack.
+# Reconnaissance                 - attacker gathers information on how the environment is built, what the different assets are, and which entities exist. They generally building their plan for the next phases of the attack.
+# Lateral movement cycle         - attacker invests time and effort in spreading their attack surface inside your network.
+# Domain dominance (persistence) - attacker captures the information allowing them to resume their campaign using various sets of entry points, credentials, and techniques. 
+# ATA searches for 3 types of attacks:
+# 1.Malicious attacks
+# 2.Abnormal behavior
+# 3.Security issues and risks
 #
-#
+
+
 #endregion
 #region Kerberoasting without mimikatz:
 # We generally don’t care about host-based SPNs.
