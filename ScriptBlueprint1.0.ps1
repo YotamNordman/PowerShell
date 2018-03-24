@@ -1251,7 +1251,7 @@ function Out-Minidump
 # that exists both in NTDS.DIT and localy on the host. This is used to encrypt the server part of the TGS. Then the ticket is presented to target host
 # and that host determines if access is permited.
 #endregion
-#region Im Reading About ATA and Active Directory Attacks
+#region Im Reading About ATA and Active Directory
 #region ATA - Advances Threat Analytics
 # How does ATA work - It uses a network parsing engine to capture and parse network traffic of multiple protocols(for example Kerberos,DNS,RPC,NTLM,etc...)
 # To do this the ata does Port mirroring from Domain Controllers and DNS servers to the ATA Gateway
@@ -1260,21 +1260,67 @@ function Out-Minidump
 # ATA could also get info from logs and events on the network.
 # This is in order to learn the behavior of users and other entities in the organization.
 # ATA can take logs from:
-# SIEM Integration
-# Windows Event Forwarding(WEF)
-# Directly from the Windows Event Collector (for the Lightweight Gateway)
+# 1.SIEM Integration
+# 2.Windows Event Forwarding(WEF)
+# 3.Directly from the Windows Event Collector (for the Lightweight Gateway)
 # What does ATA do?
 # ATA technology detects multiple suspicious activities, focusing on several phases of the cyber-attack kill chain including:
 # Reconnaissance                 - attacker gathers information on how the environment is built, what the different assets are, and which entities exist. They generally building their plan for the next phases of the attack.
 # Lateral movement cycle         - attacker invests time and effort in spreading their attack surface inside your network.
 # Domain dominance (persistence) - attacker captures the information allowing them to resume their campaign using various sets of entry points, credentials, and techniques. 
-# ATA searches for 3 types of attacks:
+# ATA searches for 3 types of activities:
 # 1.Malicious attacks
 # 2.Abnormal behavior
 # 3.Security issues and risks
-#
-
-
+# ATA sits on a giant mongoDB
+# ATA Components:
+# 1. ATA Center              - The ATA Center receives data from any ATA Gateways and/or ATA Lightweight Gateways
+#     Manages ATA Gateway and ATA Lightweight Gateway configuration settings
+#     Receives data from ATA Gateways and ATA Lightweight Gateways 
+#     Detects suspicious activities
+#     Runs ATA behavioral machine learning algorithms to detect abnormal behavior
+#     Runs various deterministic algorithms to detect advanced attacks based on the attack kill chain
+#     Runs the ATA Console
+#     The ATA Center can be configured to send emails and events when a suspicious activity is detected
+#     ATA Center Components:
+#         1.Entity Receiver            - Receives batches of entities from all ATA Gateways and ATA Lightweight Gateways
+#         2.Network Activity Processor - Processes all the network activities within each batch received. For example, matching between the various Kerberos steps performed from potentially different computers
+#         3.Entity Profiler 	       - Profiles all the Unique Entities according to the traffic and events. For example, ATA updates the list of logged-on computers for each user profile
+#         4.Center Database 	       - Manages the writing process of the Network Activities and events into the database.
+#         5.Database 	               - ATA utilizes MongoDB for purposes of storing all the data in the system:
+#         A. Network activities
+#         B. Event activities
+#         C. Unique entities
+#         D. Suspicious activities
+#         E. ATA configuration
+#         6.Detectors 	               - The Detectors use machine learning algorithms and deterministic rules to find suspicious activities and abnormal user behavior in your network
+#         7.ATA Console 	           - The ATA Console is for configuring ATA and monitoring suspicious activities detected by ATA on your network. The ATA Console is not dependent on the ATA Center service and runs even when the service is stopped, as long as it can communicate with the database
+# 2. ATA Gateway             - The ATA Gateway is installed on a dedicated server that monitors the traffic from your domain controllers using either port mirroring or a network TAP
+# Gateway core functionality - The ATA Gateway and ATA Lightweight Gateway both have the same core functionality:
+#    1. Capture and inspect domain controller network traffic. This is port mirrored traffic for ATA Gateways and local traffic of the domain controller in ATA Lightweight Gateways.
+#    2. Receive Windows events from SIEM or Syslog servers, or from domain controllers using Windows Event Forwarding
+#    3. Retrieve data about users and computers from the Active Directory domain
+#    4. Perform resolution of network entities (users, groups, and computers)
+#    5. Transfer relevant data to the ATA Center
+#    6. Monitor multiple domain controllers from a single ATA Gateway, or monitor a single domain controller for an ATA Lightweight Gateway.
+# Components:
+#    1. Network Listener            - Captures network traffic and parsing the traffic.
+#    2. Event Listener              - Captures and parsing Windows Events forwarded from a SIEM server on your network
+#    3. Windows Event Log Reader    - Reads and parsing Windows Events forwarded to the ATA Gateway's Windows Event Log from the domain controllers.(or just locally with the lightweight)
+#    4. Network Activity Translator - Translates parsed traffic into a logical representation of the traffic used by ATA (NetworkActivity)
+#    5. Entity Resolver             - Takes the parsed data (network traffic and events) and resolves it data with Active Directory to find account and identity information.
+#       It is then matched with the IP addresses found in the parsed data. The Entity Resolver inspects the packet headers efficiently, to enable parsing of authentication packets for machine names, properties, and identities. The Entity Resolver combines the parsed authentication packets with the data in the actual packet.
+#    6. Entity Sender               - Sends the parsed and matched data to the ATA Center.
+# 3. ATA Lightweight Gateway - The ATA Lightweight Gateway is installed directly on your domain controllers and monitors their traffic directly, without the need for a dedicated server or configuration of port mirroring. It is an alternative to the ATA Gateway
+#     The following features work differently depending on whether you are running an ATA Gateway or an ATA Lightweight Gateway:
+#         1. The ATA Lightweight Gateway can read events locally, without the need to configure event forwarding
+#         2. Domain synchronizer candidate -
+#             The domain synchronizer gateway is responsible for synchronizing all entities from a specific Active Directory domain proactively (similar to the mechanism used by the domain controllers themselves for replication). One gateway is chosen randomly, from the list of candidates, to serve as the domain synchronizer.
+#             If the synchronizer is offline for more than 30 minutes, another candidate is chosen instead. If there is no domain synchronizer available for a specific domain, ATA is able to proactively synchronize entities and their changes, however ATA will reactively retrieve new entities as they are detected in the monitored traffic.
+#             If there is no domain synchronizer available, and you search for an entity that did not have any traffic related to it, no search results are displayed.
+#         3. Resource limitations          - The ATA Lightweight Gateway has resource limitations because it is installed on a DC
+# Events: To enhance ATA detection of Pass-the-Hash, Brute Force, Modification to sensitive groups and Honey Tokens, ATA needs the following Windows events: 4776, 4732, 4733, 4728, 4729, 4756, 4757
+# Suspicous activity guide - In microsofts ATA site there is a guide on how to investigate each alert
 #endregion
 #region Kerberoasting without mimikatz:
 # We generally don’t care about host-based SPNs.
